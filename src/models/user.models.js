@@ -54,6 +54,33 @@ userSchema.pre("save", async function (next) {
     next();
 })//don't use arrow fn callback
 //middleware call krne me time lega so async
-//middleware h to next ayega
+//middleware hai to "next" ayega
 
+userSchema.methods.isPasswordCorrect= async function(password){
+    return await bcrypt.compare(password,this.password)
+}
+
+userSchema.methods.generateAccessToken = function (){
+    jwt.sign({//generates token
+        _id:this._id,
+        email:this.email,
+        username:this.username,
+        fullName:this.fullName,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+        expiresIn:process.env.ACCESS_TOKEN_EXPIRY,
+    }
+)
+}
+userSchema.methods.generateRefreshToken = function (){
+    jwt.sign({//generates token
+        _id:this._id,
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+        expiresIn:process.env.REFRESH_TOKEN_EXPIRY,
+    }
+)
+}
 export const User = mongoose.model("User", userSchema);
