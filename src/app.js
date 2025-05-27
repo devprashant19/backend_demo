@@ -26,4 +26,15 @@ app.use(express.static("public"))
 app.use(cookieParser())
 
 //app.get("/",(err,req,res,next)=>{}) // Actual Syntax - next is for middleware ki ab next checking pe jao ye wali ho gyi
+
+//routes import
+import userRouter from './routes/user.routes.js'
+
+// routes declaration
+
+// app.use("/users",userRouter);
+app.use("/api/v1/users",userRouter);
+
+//localhost:8000/api/v1/users/register
+
 export { app };
