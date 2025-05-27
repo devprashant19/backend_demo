@@ -1,11 +1,13 @@
 //using Promise
 const asyncHandler = (requestHandler) => {
-    (req,res,next)=>(
-        Promise.resolve(requestHandler(req,res,next)).catch((err)=>next(err))//directly promise bnake await
-    )
+    return (req, res, next) => {
+        Promise.resolve(requestHandler(req, res, next)).catch((err) => next(err))//promise me return
+    }
 }
 
-export { asyncHandler };
+
+export { asyncHandler }
+
 
 
 //using try catch
