@@ -12,7 +12,7 @@ const registerUser = asyncHandler(async (req, res) => {
     //create user object - create entry in DB
     //remove pass and refresh token from response
     //check for user creation(hua ya nhi)
-    //return res else error
+    //return response
 
     //get user details from frontend
     const { fullName, email, username, password } = req.body;
@@ -52,6 +52,28 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!avatar) {
         throw new ApiError(400, "Avatar required");
     }
+
+    //create user object - create entry in DB
+    const user = await User.create({
+        fullName,
+        avatar:avatar.url,//cloudinary returns response
+        coverImage: coverImage?.url || "",//agr h to daalo else empty
+        email,
+        password,
+        username:username.toLowerCase(),
+    })
+
+    //check for user creation
+    // const createdUser = await User.findById(user._id)//returns user 
+    //remove pass and refresh token from response
+    const createdUser = await User.findById(user._id).select(
+        "-password -refreshToken"
+    ) 
+    if(!createdUser){
+        throw new ApiError(500,"Something went wrong while registering user")
+    }
+
+    //return response
 })
 
 export { registerUser };

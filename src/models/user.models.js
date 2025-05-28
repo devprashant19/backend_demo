@@ -50,7 +50,7 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();//agr Pass change nhi hua to next
-    this.password = bcrypt.hash(this.password, 10);
+    this.password = await bcrypt.hash(this.password, 10);
     next();
 })//don't use arrow fn callback
 //middleware call krne me time lega so async
