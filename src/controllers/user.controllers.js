@@ -34,6 +34,16 @@ const registerUser = asyncHandler(async (req, res) => {
     if(existedUser){
         throw new ApiError(409,"User already exists");
     }
+
+    
+    //check for images,avatars
+    //multer middleware adds req.files method
+    const avatarLocalPath = req.files?.avatar[0]?.path// multer localPath for avatar
+    const coverImageLocalPath = req.files?.coverImage[0]?.path// multer localPath for avatar
+
+    if(!avatarLocalPath){
+        throw new ApiError(400,"Avatar required");
+    }
 })
 
 export { registerUser };
