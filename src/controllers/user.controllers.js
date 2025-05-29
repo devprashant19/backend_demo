@@ -41,8 +41,11 @@ const registerUser = asyncHandler(async (req, res) => {
     //check for images,avatars
     //multer middleware adds req.files method
     const avatarLocalPath = req.files?.avatar[0]?.path// multer localPath for avatar
-    const coverImageLocalPath = req.files?.coverImage[0]?.path// multer localPath for avatar
-
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path// multer localPath for avatar
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length>0){
+        coverImageLocalPath = req.files.coverImage[0].path// multer localPath for avatar
+    }
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar required");
     }
@@ -50,6 +53,7 @@ const registerUser = asyncHandler(async (req, res) => {
     //upload to cloudinary,avatar
     const avatar = await uploadOnCloudinary(avatarLocalPath);
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+
     if (!avatar) {
         throw new ApiError(400, "Avatar required");
     }
