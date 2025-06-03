@@ -4,6 +4,24 @@ import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from '../utils/apiResponse.js';
 
+const generateAccessAndRefreshTokens = async (UserId) => {
+    try {
+        const user = await User.findById(UserId);
+
+        //generate Access token
+        const accessToken = user.generateAccessToken()
+        //generate refresh token
+        const refreshToken = user.generateRefreshToken()
+        //save refresh token to user model
+        user.refreshToken = refreshToken;
+        //save to db
+        await user.save({ validateBeforeSave: false });//jb data dalenge to hr baar pass mangega cuz humne required bola h so we make it false ki dena na pde
+        return { accessToken, refreshToken };
+    } catch (error) {
+        throw new ApiError(500, "Something whent wrong while generating refresh tokens")
+    }
+}
+
 const registerUser = asyncHandler(async (req, res) => {
     //get user details from frontend
     //validation - non empty data
@@ -43,13 +61,13 @@ const registerUser = asyncHandler(async (req, res) => {
     const avatarLocalPath = req.files?.avatar[0]?.path// multer localPath for avatar
     // const coverImageLocalPath = req.files?.coverImage[0]?.path// multer localPath for avatar
     let coverImageLocalPath;
-    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length>0){
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
         coverImageLocalPath = req.files.coverImage[0].path// multer localPath for avatar
     }
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar required");
     }
-    
+
     //upload to cloudinary,avatar
     const avatar = await uploadOnCloudinary(avatarLocalPath);
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);
@@ -84,4 +102,65 @@ const registerUser = asyncHandler(async (req, res) => {
     )
 })
 
-export { registerUser };
+const loginUser = asyncHandler(async (req, res) => {
+    //get pass,email from user
+    //check if sent
+    //user exists
+    //password check
+    //generate access and refresh token
+    //send tokens to cookies
+    //send success response
+
+    //get pass,email from user
+    const { email, username, password } = req.body;
+    //check if sent by user
+    if ([email, password].some((field) => (
+        field?.trim() === ""))) {
+        return new ApiError(400, "Both fields are required");
+    }
+    if (!username && !email) {
+        return new ApiError(400, "Either email or password required");
+    }
+
+    //check if user exists
+    const user = await User.findOne({
+        $or: [{ email }, { username }]
+    });
+    if (!user) {
+        return new ApiError(400, "User doesn't exist");
+    }
+    //password check
+    // await User (not capital letter wala use kyuki wo mongoDB ka hai not our model wala)
+    //so we'll use "user"
+    const isPasswordValid = await user.isPasswordCorrect(password)//from bcrypt compare method in user model
+    if (!isPasswordValid) {
+        throw new ApiError(401, "Invalid User Credentials");
+    }
+
+    //create access and refresh tokens
+    //multiple time krne hote h so make a method
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+
+    //send to cookies
+
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+
+    const options = {
+        httpOnly: true,
+        secure: true,
+    }
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    user: loggedInUser, accessToken, refreshToken,
+                },
+                "User Logged In Successfully"
+            )
+        )
+})
+export { registerUser, loginUser };
