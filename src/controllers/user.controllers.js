@@ -163,4 +163,9 @@ const loginUser = asyncHandler(async (req, res) => {
             )
         )
 })
+
+const logOutUser = asyncHandler(async (req, res) => {
+    //remove cookies and tokens
+    User.findById
+})
 export { registerUser, loginUser };
