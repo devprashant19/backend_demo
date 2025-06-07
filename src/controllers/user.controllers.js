@@ -327,11 +327,11 @@ const updateCoverImage = asyncHandler(async (req, res) => {
     //multer se req.file(cuz 1 file only)
     const { coverImageLocalPath } = req.file?.path;
     if (!coverImageLocalPath) {
-        throw new ApiError(400, "Avatar file missing");
+        throw new ApiError(400, "Cover Image file missing");
     }
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);
     if (!coverImage.url) {
-        throw new ApiError(400, "Error while uploading avatar");
+        throw new ApiError(400, "Error while uploading Cover Image");
     }
 
     const user = await User.findByIdAndUpdate(
