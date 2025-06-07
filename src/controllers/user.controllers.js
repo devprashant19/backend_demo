@@ -118,7 +118,7 @@ const loginUser = asyncHandler(async (req, res) => {
         field?.trim() === ""))) {
         return new ApiError(400, "Both fields are required");
     }
-    if (!username && !email) {
+    if (!(username || email)) {
         return new ApiError(400, "Either email or password required");
     }
 
