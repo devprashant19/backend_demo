@@ -236,4 +236,5 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         throw new ApiError(401, error?.message || "Something went wrong");
     }
 })
+
 export { registerUser, loginUser, logOutUser, refreshAccessToken};
