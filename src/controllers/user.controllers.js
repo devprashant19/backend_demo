@@ -285,7 +285,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
         },
         { new: true },//update hone ke baad jo update hui info print
     ).select("-password ");
-    
+
     return res
         .status(200)
         .json(new ApiResponse(
@@ -293,4 +293,62 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
             user,
             "Account Details updated successfully"))
 })
-export { registerUser, loginUser, logOutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser };
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    //multer se req.file(cuz 1 file only)
+    const { avatarLocalPath } = req.file?.path;
+    if (!avatarLocalPath) {
+        throw new ApiError(400, "Avatar file missing");
+    }
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+    if (!avatar.url) {
+        throw new ApiError(400, "Error while uploading avatar");
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set:{
+                avatar:avatar.url,
+            }
+        },
+        {new:true}
+    ).select("-password")
+
+    return res
+        .status(200)
+        .json(new ApiResponse(
+            200,
+            user,
+            "Avatar updated successfully"))
+})
+
+const updateCoverImage = asyncHandler(async (req, res) => {
+    //multer se req.file(cuz 1 file only)
+    const { coverImageLocalPath } = req.file?.path;
+    if (!coverImageLocalPath) {
+        throw new ApiError(400, "Avatar file missing");
+    }
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+    if (!coverImage.url) {
+        throw new ApiError(400, "Error while uploading avatar");
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set:{
+                coverImage:coverImage.url,
+            }
+        },
+        {new:true}
+    ).select("-password")
+
+    return res
+        .status(200)
+        .json(new ApiResponse(
+            200,
+            user,
+            "Cover Image updated successfully"))
+})
+export { registerUser, loginUser, logOutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateUserAvatar,updateCoverImage };
