@@ -7,9 +7,8 @@ import { ApiResponse } from '../utils/apiResponse.js';
 const generateAccessAndRefreshTokens = async (UserId) => {
     try {
         const user = await User.findById(UserId);
-
         //generate Access token
-        const accessToken = user.generateAccessToken()
+        const accessToken = user.generateAccessToken();
         //generate refresh token
         const refreshToken = user.generateRefreshToken()
         //save refresh token to user model
@@ -140,11 +139,9 @@ const loginUser = asyncHandler(async (req, res) => {
     //create access and refresh tokens
     //multiple time krne hote h so make a method
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
-
+    
     //send to cookies
-
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
-
     const options = {
         httpOnly: true,
         secure: true,
