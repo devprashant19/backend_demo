@@ -1,7 +1,7 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from "../utils/apiError.js";
 import { User } from "../models/user.models.js";
-import { uploadOnCloudinary,deleteFromCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from '../utils/apiResponse.js';
 import jwt from "jsonwebtoken";
 
@@ -262,6 +262,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
+    //after logged in
     return res
         .status(200)
         .json(new ApiResponse(200, req.user, "Current User fetched successfully"))
@@ -298,7 +299,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     //delete old avatar
     if (req.user.avatar) {
         const publicId = req.user.avatar.split('/').pop().split('.')[0];
-        await deleteFromCloudinary(publicId); 
+        await deleteFromCloudinary(publicId);
     }
     //multer se req.file(cuz 1 file only)
     const { avatarLocalPath } = req.file?.path;
@@ -313,11 +314,11 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
-            $set:{
-                avatar:avatar.url,
+            $set: {
+                avatar: avatar.url,
             }
         },
-        {new:true}
+        { new: true }
     ).select("-password")
 
     return res
@@ -342,11 +343,11 @@ const updateCoverImage = asyncHandler(async (req, res) => {
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
-            $set:{
-                coverImage:coverImage.url,
+            $set: {
+                coverImage: coverImage.url,
             }
         },
-        {new:true}
+        { new: true }
     ).select("-password")
 
     return res
@@ -357,4 +358,62 @@ const updateCoverImage = asyncHandler(async (req, res) => {
             "Cover Image updated successfully"))
 })
 
-export { registerUser, loginUser, logOutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateUserAvatar,updateCoverImage };
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+    //get user channel url
+    const { username } = req.params;
+    if (!username?.trim()) {
+        throw new ApiError(400, "Username missing");
+    }
+
+    // User.find({username})
+    //make aggregate pipeline with this username
+    const channel = await User.aggregate([
+        {
+            $match: {
+                username: username?.toLowerCase(),
+            },
+            //1st pipeline
+            $lookup: {
+                from: "subscriptions",//Mongodb stores it as "subscriptions" form subscription schema model
+                localField: "_id",
+                foreignField: "channel",//count no. of channel to get subscribers
+                as: "subscribers"
+            },
+            //2nd pipeline
+            $lookup: {
+                from: "subscriptions",//Mongodb stores it as "subscriptions" form subscription schema model
+                localField: "_id",
+                foreignField: "subscriber",//count no. of subscribed channels
+                as: "subscribedTo"
+            },
+            $addFields: {
+                subscribersCount: {
+                    $size: "$subscribers"//count subscribers
+                },
+                channelsSubscribedToCount: {
+                    $size: "$subscribedTo"//count channels subscribed to
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: { $in: [req.user?._id, "$subscribers.subscriber"] },//check whether user is subscribed
+                        then: true,
+                        else: false
+                    }
+                }
+            },
+            //3rd pipeline $project to give/send selected data
+            $project:{
+                fullName:1,
+                username:1,
+                subscribersCount:1,
+                channelsSubscribedToCount:1,
+                isSubscribed:1,
+                avatar:1,
+                coverImage:1,
+                email:1
+            }
+        }
+    ])
+})
+
+export { registerUser, loginUser, logOutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateUserAvatar, updateCoverImage, getUserChannelProfile };
