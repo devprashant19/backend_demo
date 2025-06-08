@@ -1,7 +1,7 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from "../utils/apiError.js";
 import { User } from "../models/user.models.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary,deleteFromCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from '../utils/apiResponse.js';
 import jwt from "jsonwebtoken";
 
@@ -295,6 +295,11 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 })
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
+    //delete old avatar
+    if (req.user.avatar) {
+        const publicId = req.user.avatar.split('/').pop().split('.')[0];
+        await deleteFromCloudinary(publicId); 
+    }
     //multer se req.file(cuz 1 file only)
     const { avatarLocalPath } = req.file?.path;
     if (!avatarLocalPath) {
@@ -351,4 +356,5 @@ const updateCoverImage = asyncHandler(async (req, res) => {
             user,
             "Cover Image updated successfully"))
 })
+
 export { registerUser, loginUser, logOutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateAccountDetails, updateUserAvatar,updateCoverImage };
